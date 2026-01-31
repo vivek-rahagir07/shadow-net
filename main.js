@@ -2,24 +2,27 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 // --- Data ---
 const ASL_ALPHABET = [
-    { letter: 'A', name: 'Alpha' }, { letter: 'B', name: 'Bravo' }, { letter: 'C', name: 'Charlie' },
-    { letter: 'D', name: 'Delta' }, { letter: 'E', name: 'Echo' }, { letter: 'F', name: 'Foxtrot' },
-    { letter: 'G', name: 'Golf' }, { letter: 'H', name: 'Hotel' }, { letter: 'I', name: 'India' },
-    { letter: 'J', name: 'Juliet' }, { letter: 'K', name: 'Kilo' }, { letter: 'L', name: 'Lima' },
-    { letter: 'M', name: 'Mike' }, { letter: 'N', name: 'November' }, { letter: 'O', name: 'Oscar' },
-    { letter: 'P', name: 'Papa' }, { letter: 'Q', name: 'Quebec' }, { letter: 'R', name: 'Romeo' },
-    { letter: 'S', name: 'Sierra' }, { letter: 'T', name: 'Tango' }, { letter: 'U', name: 'Uniform' },
-    { letter: 'V', name: 'Victor' }, { letter: 'W', name: 'Whiskey' }, { letter: 'X', name: 'X-ray' },
-    { letter: 'Y', name: 'Yankee' }, { letter: 'Z', name: 'Zulu' }
+    { letter: 'A', name: 'Alpha', emoji: '✊' }, { letter: 'B', name: 'Bravo', emoji: '✋' }, { letter: 'C', name: 'Charlie', emoji: '👌' },
+    { letter: 'D', name: 'Delta', emoji: '☝️' }, { letter: 'E', name: 'Echo', emoji: '✊' }, { letter: 'F', name: 'Foxtrot', emoji: '👌' },
+    { letter: 'G', name: 'Golf', emoji: '👈' }, { letter: 'H', name: 'Hotel', emoji: '👈' }, { letter: 'I', name: 'India', emoji: '🤙' },
+    { letter: 'J', name: 'Juliet', emoji: '🤙' }, { letter: 'K', name: 'Kilo', emoji: '✌️' }, { letter: 'L', name: 'Lima', emoji: '🤟' },
+    { letter: 'M', name: 'Mike', emoji: '✊' }, { letter: 'N', name: 'November', emoji: '✊' }, { letter: 'O', name: 'Oscar', emoji: '👌' },
+    { letter: 'P', name: 'Papa', emoji: '👈' }, { letter: 'Q', name: 'Quebec', emoji: '👈' }, { letter: 'R', name: 'Romeo', emoji: '✌️' },
+    { letter: 'S', name: 'Sierra', emoji: '✊' }, { letter: 'T', name: 'Tango', emoji: '✊' }, { letter: 'U', name: 'Uniform', emoji: '✌️' },
+    { letter: 'V', name: 'Victor', emoji: '✌️' }, { letter: 'W', name: 'Whiskey', emoji: '🤟' }, { letter: 'X', name: 'X-ray', emoji: '☝️' },
+    { letter: 'Y', name: 'Yankee', emoji: '🤙' }, { letter: 'Z', name: 'Zulu', emoji: '☝️' }
 ];
 
 const TUTORIAL_LEVELS = [
-    { title: "Level 1: Letter by Letter", description: "Learn the alphabet sequentially.", type: "sequence", data: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("") },
+    { title: "Level 1: Letter by Letter", description: "Learn the alphabet sequentially with emoji guides.", type: "sequence", data: ASL_ALPHABET },
     { title: "Level 2: Random Recall", description: "Match random letters to test your memory.", type: "random_letters", count: 10 },
     { title: "Level 3: Word Builder", description: "Standard words for daily use.", type: "words", data: ["HELLO", "PLEASE", "THANK", "HELP", "YES", "NO"] },
     { title: "Level 4: Speed Challenge", description: "Random words against the clock.", type: "timed_words", time: 30 },
-    { title: "Level 5: Expression", description: "Constructing simple sentences.", type: "sentences", data: ["I NEED HELP", "THANK YOU", "HOW ARE YOU"] }
+    { title: "Level 5: Expression", description: "Constructing simple sentences using signs.", type: "sentences", data: ["I NEED HELP", "THANK YOU", "HOW ARE YOU"] }
 ];
+
+// Reference Image Path from User Upload
+const REFERENCE_IMAGE = "file:///Users/vivek/.gemini/antigravity/brain/3b3acdd0-ad6f-47f5-b978-a313d396fcd6/uploaded_media_1769823992073.png";
 
 // --- Utility Components ---
 
@@ -108,7 +111,8 @@ const recognize = (data, mode) => {
         if (!index && !middle && !ring && !pinky && thumbUp) return "10";
         if (!index && !middle && !ring && !pinky) return "0";
     }
-    // Letters (A-Z) - basic mappings
+
+    // Letters (A-Z)
     if (!index && !middle && !ring && !pinky) { if (thumbUp) return "A"; return "S"; }
     if (index && !middle && !ring && !pinky) { if (thumbOut) return "L"; if (pinches[1]) return "D"; return "Z"; }
     if (!index && !middle && !ring && pinky) { if (thumbOut) return "Y"; return "I"; }
@@ -131,18 +135,26 @@ const AslReferenceDrawer = ({ isOpen, onClose }) => (
                 <i data-lucide="x" className="w-6 h-6"></i>
             </button>
         </div>
-        <p className="text-slate-400 text-sm mb-6">Reference for Alphabets (A-Z)</p>
+        <div className="flex flex-col gap-4 mb-8">
+            <img src={REFERENCE_IMAGE} alt="ASL Reference" className="w-full rounded-xl border border-slate-700 shadow-lg" />
+            <p className="text-slate-400 text-xs italic">Use the visual guide above to match your hand signs.</p>
+        </div>
         <div className="asl-grid">
             {ASL_ALPHABET.map((item) => (
-                <div key={item.letter} className="asl-card shadow-lg">
+                <div key={item.letter} className="asl-card shadow-lg group">
+                    <span className="text-2xl mb-1 block group-hover:scale-125 transition-transform">{item.emoji}</span>
                     <span className="letter">{item.letter}</span>
                     <span className="name">{item.name}</span>
                 </div>
             ))}
         </div>
         <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-            <h4 className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-2">Pro Tip</h4>
-            <p className="text-slate-400 text-xs leading-relaxed">Two hands together can trigger special "Quick Phrases". Clap hands to clear your message!</p>
+            <h4 className="text-amber-400 font-bold text-xs uppercase tracking-widest mb-2">Simplified Gestures</h4>
+            <div className="space-y-2">
+                <p className="text-slate-400 text-xs">👏 <b>Clap/Close Hands</b>: Clear message</p>
+                <p className="text-slate-400 text-xs">👍👍 <b>Both Thumbs Up</b>: Confirm/Yes</p>
+                <p className="text-slate-400 text-xs">✋✋ <b>Both Palms Out</b>: Stop/Need Help</p>
+            </div>
         </div>
     </div>
 );
@@ -239,15 +251,13 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
     const canvasRef = useRef(null);
     const [model, setModel] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [tab, setTab] = useState(initialTab); // 'bridge' or 'learn'
+    const [tab, setTab] = useState(initialTab);
     const [isGuideOpen, setGuideOpen] = useState(false);
 
-    // Bridge State
     const [sentence, setSentence] = useState([]);
     const [currentGesture, setCurrentGesture] = useState(null);
     const [progress, setProgress] = useState(0);
 
-    // Learning State
     const [levelIndex, setLevelIndex] = useState(0);
     const [targetIndex, setTargetIndex] = useState(0);
     const [successFeedback, setSuccessFeedback] = useState(false);
@@ -272,7 +282,6 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
         };
     }, []);
 
-    // Main Processing Loop
     useEffect(() => {
         if (!model || loading) return;
         const loop = async () => {
@@ -282,7 +291,6 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
                 ctx.clearRect(0, 0, 640, 480);
 
                 if (predictions.length > 0) {
-                    // Draw Skeletons for all hands
                     predictions.forEach(hand => {
                         hand.landmarks.forEach(pt => {
                             ctx.beginPath(); ctx.arc(pt[0], pt[1], 4, 0, 2 * Math.PI);
@@ -290,16 +298,34 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
                         });
                     });
 
-                    // Two-Hand Gesture (simplified: clapping detect via width between palms)
+                    // TWO HAND GESTURES
                     if (predictions.length === 2) {
+                        const h1 = analyzeHand(predictions[0].landmarks);
+                        const h2 = analyzeHand(predictions[1].landmarks);
+
+                        // Clap / Close Palms
                         const dist = Math.abs(predictions[0].landmarks[0][0] - predictions[1].landmarks[0][0]);
-                        if (dist < 100) { // Palms close
+                        if (dist < 100) {
                             setSentence([]); speak("Cleared");
+                            return;
+                        }
+
+                        // Double Thumbs Up (YES)
+                        if (h1.thumbUp && !h1.fingers[0] && h2.thumbUp && !h2.fingers[0]) {
+                            setCurrentGesture("YES 👍👍");
+                            updateProgress("YES");
+                            return;
+                        }
+
+                        // Double Palms Out (HELP)
+                        if (h1.fingers.every(f => f) && h2.fingers.every(f => f)) {
+                            setCurrentGesture("HELP ✋✋");
+                            updateProgress("HELP");
                             return;
                         }
                     }
 
-                    // Single Hand Analysis (dominant hand)
+                    // Single Hand
                     const handData = analyzeHand(predictions[0].landmarks);
                     const gesture = recognize(handData, tab === 'bridge' ? 'letters' : 'tutorial');
 
@@ -329,34 +355,57 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
         loop();
     }, [model, loading, tab, levelIndex, targetIndex]);
 
+    const updateProgress = (gesture) => {
+        if (gesture === gestureRef.current.last) {
+            const duration = Date.now() - gestureRef.current.start;
+            setProgress(Math.min((duration / 1000) * 100, 100));
+            if (duration > 1000) {
+                handleConfirm(gesture);
+                gestureRef.current.start = Date.now();
+                setProgress(0);
+            }
+        } else {
+            gestureRef.current = { start: Date.now(), last: gesture };
+            setProgress(0);
+        }
+    };
+
     const handleConfirm = (gesture) => {
         if (tab === 'bridge') {
             setSentence(prev => [...prev, gesture]);
             speak(gesture);
         } else {
-            const currentLevel = TUTORIAL_LEVELS[levelIndex];
-            const target = getTarget();
+            const target = getTarget().id;
             if (gesture === target) {
                 setSuccessFeedback(true);
-                speak("Great!");
+                speak("Success!");
                 setTimeout(() => {
                     setSuccessFeedback(false);
                     advanceTutorial();
-                }, 1000);
+                }, 800);
             }
         }
     };
 
     const getTarget = () => {
         const level = TUTORIAL_LEVELS[levelIndex];
-        if (level.type === 'sequence') return level.data[targetIndex];
-        if (level.type === 'random_letters') return String.fromCharCode(65 + (targetIndex % 26)); // Dummy random
-        return level.data[targetIndex % level.data.length];
+        if (level.type === 'sequence') {
+            const item = level.data[targetIndex % level.data.length];
+            return { id: item.letter, emoji: item.emoji };
+        }
+        if (level.type === 'random_letters') {
+            const charCode = 65 + (targetIndex % 26);
+            const letter = String.fromCharCode(charCode);
+            const emoji = ASL_ALPHABET.find(a => a.letter === letter)?.emoji || "❓";
+            return { id: letter, emoji };
+        }
+        const word = level.data[targetIndex % level.data.length];
+        return { id: word, emoji: "📝" };
     };
 
     const advanceTutorial = () => {
         setTargetIndex(prev => prev + 1);
-        if (targetIndex >= 5) { // Completing a chunk
+        if (targetIndex >= 4) {
             setLevelIndex(prev => Math.min(prev + 1, TUTORIAL_LEVELS.length - 1));
             setTargetIndex(0);
         }
@@ -367,11 +416,7 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
             <AslReferenceDrawer isOpen={isGuideOpen} onClose={() => setGuideOpen(false)} />
 
             <div className="flex justify-between w-full items-center mb-8">
-                <div>
-                    <h2 className="text-3xl font-extrabold text-amber-400 flex items-center gap-3">
-                        <i data-lucide="hand"></i> {tab === 'bridge' ? 'ASL Bridge' : 'ASL Academy'}
-                    </h2>
-                </div>
+                <h2 className="text-3xl font-extrabold text-amber-400 flex items-center gap-3"><i data-lucide="hand"></i> {tab === 'bridge' ? 'ASL Bridge' : 'ASL Academy'}</h2>
                 <div className="flex gap-4">
                     <Button onClick={() => setGuideOpen(true)} variant="warning" iconName="book-open">Open Guide</Button>
                     <Button onClick={onBack} variant="secondary" iconName="arrow-left">Exit</Button>
@@ -381,21 +426,28 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
             <div className="grid lg:grid-cols-5 gap-8 w-full">
                 <div className="lg:col-span-3 space-y-6">
                     <div className="flex bg-slate-800/50 p-1.5 rounded-2xl glass">
-                        <button onClick={() => setTab('bridge')} className={`flex-1 py-3 rounded-xl font-bold transition-all ${tab === 'bridge' ? 'bg-amber-500 text-slate-900' : 'text-slate-400'}`}>Real-time Bridge</button>
-                        <button onClick={() => setTab('learn')} className={`flex-1 py-3 rounded-xl font-bold transition-all ${tab === 'learn' ? 'bg-amber-500 text-slate-900' : 'text-slate-400'}`}>Learning Mode</button>
+                        <button onClick={() => setTab('bridge')} className={`flex-1 py-3 rounded-xl font-bold transition-all ${tab === 'bridge' ? 'bg-amber-500 text-slate-900 shadow-lg' : 'text-slate-400'}`}>Real-time Bridge</button>
+                        <button onClick={() => setTab('learn')} className={`flex-1 py-3 rounded-xl font-bold transition-all ${tab === 'learn' ? 'bg-amber-500 text-slate-900 shadow-lg' : 'text-slate-400'}`}>Learning Mode</button>
                     </div>
 
-                    <div className="video-container relative border-amber-500/20">
-                        {loading && <div className="absolute inset-0 z-20 bg-slate-950/90"><Loader text="Warming up..." /></div>}
+                    <div className="video-container relative border-amber-500/20 shadow-2xl">
+                        {loading && <div className="absolute inset-0 z-20 bg-slate-950/90"><Loader text="Initializing neural engine..." /></div>}
                         {successFeedback && <div className="success-swipe"></div>}
-                        {tab === 'learn' && <div className="learning-target">{getTarget()}</div>}
+
+                        {tab === 'learn' && (
+                            <div className="learning-target flex flex-col items-center gap-2">
+                                <span className="text-8xl">{getTarget().id}</span>
+                                <span className="text-4xl opacity-80">{getTarget().emoji}</span>
+                            </div>
+                        )}
+
                         <video ref={videoRef} autoPlay playsInline muted width="640" height="480" />
                         <canvas ref={canvasRef} width="640" height="480" />
 
                         {currentGesture && (
-                            <div className="absolute top-6 right-6 glass px-6 py-4 rounded-3xl border border-amber-500/50 flex flex-col items-center min-w-[100px]">
-                                <span className="text-5xl font-black text-amber-400">{currentGesture}</span>
-                                <div className="w-full h-1.5 bg-slate-700/50 mt-4 rounded-full overflow-hidden">
+                            <div className="absolute top-6 right-6 glass px-6 py-4 rounded-3xl border border-amber-500/50 flex flex-col items-center min-w-[120px] shadow-xl animate-scale-in">
+                                <span className="text-5xl font-black text-amber-400 tracking-tighter">{currentGesture}</span>
+                                <div className="w-full h-2 bg-slate-700/50 mt-4 rounded-full overflow-hidden">
                                     <div className="h-full bg-amber-400 transition-all duration-100" style={{ width: `${progress}%` }}></div>
                                 </div>
                             </div>
@@ -405,16 +457,17 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
 
                 <div className="lg:col-span-2 space-y-6">
                     {tab === 'bridge' ? (
-                        <div className="glass p-6 rounded-3xl space-y-4">
+                        <div className="glass p-6 rounded-3xl space-y-4 shadow-xl">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Live Message</h3>
                             <div className="min-h-[150px] bg-slate-950/50 rounded-2xl p-4 flex flex-wrap gap-2 content-start border border-slate-800">
-                                {sentence.map((w, i) => <span key={i} className="bg-amber-500/10 text-amber-400 px-4 py-1.5 rounded-xl border border-amber-500/20 text-xl font-bold">{w}</span>)}
+                                {sentence.length === 0 && <span className="text-slate-700 italic">Sign letters to build a message...</span>}
+                                {sentence.map((w, i) => <span key={i} className="bg-amber-500/10 text-amber-400 px-4 py-1.5 rounded-xl border border-amber-500/20 text-xl font-bold animate-fade-in">{w}</span>)}
                             </div>
-                            <Button onClick={() => speak(sentence.join(""))} variant="success" iconName="volume-2" className="w-full">Speak Message</Button>
+                            <Button onClick={() => speak(sentence.join(""))} variant="success" iconName="volume-2" className="w-full py-4 text-lg">Speak Message</Button>
                         </div>
                     ) : (
-                        <div className="glass p-6 rounded-3xl space-y-6">
-                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Career Progress</h3>
+                        <div className="glass p-6 rounded-3xl space-y-6 shadow-xl">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Level Progress</h3>
                             <div className="tutorial-stepper">
                                 {TUTORIAL_LEVELS.map((L, i) => (
                                     <div key={i} className={`step-dot ${i === levelIndex ? 'active' : i < levelIndex ? 'completed' : ''}`} />
@@ -424,9 +477,12 @@ const AslBridge = ({ onBack, initialTab = 'bridge' }) => {
                                 <h4 className="text-xl font-bold text-white mb-2">{TUTORIAL_LEVELS[levelIndex].title}</h4>
                                 <p className="text-slate-400 text-sm leading-relaxed">{TUTORIAL_LEVELS[levelIndex].description}</p>
                             </div>
-                            <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl text-center">
-                                <p className="text-amber-400 font-bold mb-1">Target: {getTarget()}</p>
-                                <p className="text-slate-500 text-xs italic">Hold sign for 1s to confirm</p>
+                            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center space-y-4">
+                                <div className="flex items-center justify-center gap-4">
+                                    <span className="text-4xl text-white font-black">{getTarget().id}</span>
+                                    <span className="text-4xl">{getTarget().emoji}</span>
+                                </div>
+                                <p className="text-slate-500 text-xs italic font-medium">Hold index fingerprint pattern for 1s</p>
                             </div>
                         </div>
                     )}
@@ -450,27 +506,25 @@ const App = () => {
             <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full"></div>
             <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-600/10 blur-[120px] rounded-full"></div>
             <header className="mb-16 text-center z-10 animate-slide-up">
-                <div className="inline-block px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-black uppercase tracking-[0.2em] mb-6">Empowering accessibility</div>
-                <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-6">Vision<span className="text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-blue-600">Assist</span></h1>
-                <p className="text-slate-400 max-w-lg mx-auto text-lg font-medium">Neural accessibility tools for the modern web.</p>
+                <div className="inline-block px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-xs font-black uppercase tracking-[0.2em] mb-6 shadow-sm">Advanced Accessibility</div>
+                <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-6 leading-none">Vision<span className="text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 to-blue-600">Assist</span></h1>
+                <p className="text-slate-400 max-w-lg mx-auto text-lg font-medium leading-relaxed">Neural accessibility bridge for the deaf and visually impaired.</p>
             </header>
             <div className="grid md:grid-cols-2 gap-8 w-full max-w-5xl z-10">
-                <div className="group glass p-10 rounded-[3rem] border-slate-800 hover:border-cyan-500/50 transition-all duration-500 animate-slide-up [animation-delay:100ms]">
-                    <div className="w-20 h-20 bg-cyan-500/10 rounded-3xl flex items-center justify-center mb-8 text-cyan-400"><i data-lucide="eye" className="w-10 h-10"></i></div>
+                <div className="group glass p-10 rounded-[3rem] border-slate-800 hover:border-cyan-500/50 transition-all duration-500 animate-slide-up [animation-delay:100ms] hover:shadow-cyan-500/10">
+                    <div className="w-20 h-20 bg-cyan-500/10 rounded-3xl flex items-center justify-center mb-8 text-cyan-400 group-hover:scale-110 transition-transform"><i data-lucide="eye" className="w-10 h-10"></i></div>
                     <h2 className="text-3xl font-black text-white mb-4">Shadow Net</h2>
-                    <p className="text-slate-400 mb-8">AI eyes for environmental awareness and obstacle detection.</p>
-                    <Button onClick={() => setMode('shadow')} variant="accent" className="w-full">Launch Scanner</Button>
+                    <p className="text-slate-400 mb-8 font-medium">AI eyes for environmental awareness and real-time guidance.</p>
+                    <Button onClick={() => setMode('shadow')} variant="accent" className="w-full py-4 rounded-[2rem]">Launch Scanner</Button>
                 </div>
-                <div className="group glass p-10 rounded-[3rem] border-slate-800 hover:border-amber-500/50 transition-all duration-500 animate-slide-up [animation-delay:200ms]">
-                    <div className="w-20 h-20 bg-amber-500/10 rounded-3xl flex items-center justify-center mb-8 text-amber-400"><i data-lucide="hand" className="w-10 h-10"></i></div>
+                <div className="group glass p-10 rounded-[3rem] border-slate-800 hover:border-amber-500/50 transition-all duration-500 animate-slide-up [animation-delay:200ms] hover:shadow-amber-500/10">
+                    <div className="w-20 h-20 bg-amber-500/10 rounded-3xl flex items-center justify-center mb-8 text-amber-400 group-hover:scale-110 transition-transform"><i data-lucide="hand" className="w-10 h-10"></i></div>
                     <h2 className="text-3xl font-black text-white mb-4">ASL Bridge</h2>
-                    <p className="text-slate-400 mb-8">Intelligent gesture translator and sign language academy.</p>
-                    <div className="flex flex-col gap-3">
-                        <Button onClick={() => setMode('asl')} variant="warning" className="w-full">Start Academy</Button>
-                    </div>
+                    <p className="text-slate-400 mb-8 font-medium">Gesture academy and real-time sign language synthesis.</p>
+                    <Button onClick={() => setMode('asl')} variant="warning" className="w-full py-4 rounded-[2rem]">Enter Academy</Button>
                 </div>
             </div>
-            <footer className="mt-20 text-slate-600 text-sm font-bold uppercase tracking-widest z-10">&copy; 2026 VisionAssist AI</footer>
+            <footer className="mt-20 text-slate-600 text-sm font-bold uppercase tracking-widest z-10">&copy; 2026 VisionAssist AI • Version 2.0 Project Reorganization</footer>
         </div>
     );
 };
