@@ -1,13 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;700&display=swap');
 
 :root {
-    --bg-dark: #0f172a;
-    --bg-darker: #020617;
-    --accent-cyan: #22d3ee;
-    --accent-blue: #3b82f6;
-    --accent-amber: #fbbf24;
-    --card-bg: rgba(30, 41, 59, 0.7);
-    --border-color: rgba(255, 255, 255, 0.1);
+    --bg-dark: #05010c;
+    --bg-darker: #020106;
+    --accent-cyan: #00f2ff;
+    --accent-blue: #3d5afe;
+    --accent-amber: #ffab00;
+    --accent-emerald: #00e676;
+    --card-bg: rgba(10, 15, 30, 0.7);
+    --border-color: rgba(0, 242, 255, 0.15);
+    --neon-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
 }
 
 body {
@@ -32,10 +34,17 @@ canvas {
     max-width: 640px;
     aspect-ratio: 4/3;
     overflow: hidden;
-    border-radius: 1.5rem;
-    background: #1e293b;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border-radius: 2rem;
+    background: #0a0f1e;
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8), var(--neon-shadow);
     border: 1px solid var(--border-color);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.video-container:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 40px 80px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 242, 255, 0.4);
 }
 
 video {
@@ -85,10 +94,16 @@ video {
 
 /* Glassmorphism */
 .glass {
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 15, 25, 0.65);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+}
+
+.glass:hover {
+    background: rgba(15, 20, 35, 0.75);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Premium Animations */
@@ -137,31 +152,36 @@ video {
 }
 
 .asl-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.75rem;
-    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1rem;
     text-align: center;
-    transition: all 0.2s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
 }
 
 .asl-card:hover {
-    background: rgba(251, 191, 36, 0.1);
-    border-color: #fbbf24;
+    background: rgba(255, 171, 0, 0.15);
+    border-color: var(--accent-amber);
+    transform: translateY(-8px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(255, 171, 0, 0.2);
 }
 
 .asl-card .letter {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 800;
-    color: #fbbf24;
+    color: var(--accent-amber);
     display: block;
+    text-shadow: 0 0 10px rgba(255, 171, 0, 0.5);
 }
 
 .asl-card .name {
-    font-size: 0.7rem;
-    color: #64748b;
+    font-size: 0.75rem;
+    color: #94a3b8;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
+    font-weight: 600;
 }
 
 /* Learning Overlays */

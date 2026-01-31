@@ -2,13 +2,13 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 // --- Data ---
 const ASL_ALPHABET = [
-    { letter: 'A', name: 'Alpha', emoji: '✊' }, { letter: 'B', name: 'Bravo', emoji: '✋' }, { letter: 'C', name: 'Charlie', emoji: '👌' },
+    { letter: 'A', name: 'Alpha', emoji: '✊' }, { letter: 'B', name: 'Bravo', emoji: '✋' }, { letter: 'C', name: 'Charlie', emoji: '↪️' },
     { letter: 'D', name: 'Delta', emoji: '☝️' }, { letter: 'E', name: 'Echo', emoji: '✊' }, { letter: 'F', name: 'Foxtrot', emoji: '👌' },
-    { letter: 'G', name: 'Golf', emoji: '👈' }, { letter: 'H', name: 'Hotel', emoji: '👈' }, { letter: 'I', name: 'India', emoji: '🤙' },
-    { letter: 'J', name: 'Juliet', emoji: '🤙' }, { letter: 'K', name: 'Kilo', emoji: '✌️' }, { letter: 'L', name: 'Lima', emoji: '🤟' },
-    { letter: 'M', name: 'Mike', emoji: '✊' }, { letter: 'N', name: 'November', emoji: '✊' }, { letter: 'O', name: 'Oscar', emoji: '👌' },
-    { letter: 'P', name: 'Papa', emoji: '👈' }, { letter: 'Q', name: 'Quebec', emoji: '👈' }, { letter: 'R', name: 'Romeo', emoji: '✌️' },
-    { letter: 'S', name: 'Sierra', emoji: '✊' }, { letter: 'T', name: 'Tango', emoji: '✊' }, { letter: 'U', name: 'Uniform', emoji: '✌️' },
+    { letter: 'G', name: 'Golf', emoji: '👈' }, { letter: 'H', name: 'Hotel', emoji: '👉' }, { letter: 'I', name: 'India', emoji: '🤙' },
+    { letter: 'J', name: 'Juliet', emoji: '⤴️' }, { letter: 'K', name: 'Kilo', emoji: '🖖' }, { letter: 'L', name: 'Lima', emoji: '🤟' },
+    { letter: 'M', name: 'Mike', emoji: '🤚' }, { letter: 'N', name: 'November', emoji: '👋' }, { letter: 'O', name: 'Oscar', emoji: '👌' },
+    { letter: 'P', name: 'Papa', emoji: '👇' }, { letter: 'Q', name: 'Quebec', emoji: '🤏' }, { letter: 'R', name: 'Romeo', emoji: '🤞' },
+    { letter: 'S', name: 'Sierra', emoji: '👊' }, { letter: 'T', name: 'Tango', emoji: '🤛' }, { letter: 'U', name: 'Uniform', emoji: '✌️' },
     { letter: 'V', name: 'Victor', emoji: '✌️' }, { letter: 'W', name: 'Whiskey', emoji: '🤟' }, { letter: 'X', name: 'X-ray', emoji: '☝️' },
     { letter: 'Y', name: 'Yankee', emoji: '🤙' }, { letter: 'Z', name: 'Zulu', emoji: '☝️' }
 ];
@@ -97,7 +97,7 @@ const recognize = (data, mode) => {
     const [index, middle, ring, pinky] = fingers;
     const count = fingers.filter(f => f).length;
 
-    // Simplified recognition logic for tutorial/bridge
+    // Numbers (0-10)
     if (mode === 'numbers') {
         if (count === 4 && thumbOut) return "5";
         if (count === 4 && !thumbOut) return "4";
@@ -112,14 +112,47 @@ const recognize = (data, mode) => {
         if (!index && !middle && !ring && !pinky) return "0";
     }
 
-    // Letters (A-Z)
-    if (!index && !middle && !ring && !pinky) { if (thumbUp) return "A"; return "S"; }
-    if (index && !middle && !ring && !pinky) { if (thumbOut) return "L"; if (pinches[1]) return "D"; return "Z"; }
-    if (!index && !middle && !ring && pinky) { if (thumbOut) return "Y"; return "I"; }
-    if (index && middle && !ring && !pinky) { if (crossed) return "R"; if (indexMiddleDistance > 50) return "V"; return "U"; }
+    // Letters (A-Z) - Enhanced Recognition Logic
+    // A: Closed fist, thumb alongside (thumbUp actually means thumb is top side here)
+    if (!index && !middle && !ring && !pinky) {
+        if (thumbUp) return "A";
+        return "S";
+    }
+
+    // B: All fingers extended and together
+    if (index && middle && ring && pinky && !thumbOut) return "B";
+
+    // C: Curved fingers (hard to detect perfectly, but can estimate)
+    if (index && middle && ring && pinky && thumbOut) return "C";
+
+    // D: Index extended, others pinched
+    if (index && !middle && !ring && !pinky && pinches[1]) return "D";
+
+    // L: Index and Thumb extended
+    if (index && !middle && !ring && !pinky && thumbOut) return "L";
+
+    // V: Index and Middle spread
+    if (index && middle && !ring && !pinky && indexMiddleDistance > 50) return "V";
+
+    // U: Index and Middle together
+    if (index && middle && !ring && !pinky && indexMiddleDistance < 30) return "U";
+
+    // W: Index, Middle, Ring extended
     if (index && middle && ring && !pinky) return "W";
+
+    // F: Thumb and Index touch, others extended
     if (pinches[0] && middle && ring && pinky) return "F";
-    if (index && middle && ring && pinky) return "B";
+
+    // R: Index and Middle crossed
+    if (index && middle && !ring && !pinky && crossed) return "R";
+
+    // Y: Thumb and Pinky extended
+    if (!index && !middle && !ring && pinky && thumbOut) return "Y";
+
+    // I: Only Pinky extended
+    if (!index && !middle && !ring && pinky && !thumbOut) return "I";
+
+    // ASL "I Love You" sign (🤟)
     if (index && pinky && !middle && !ring && thumbOut) return "🤟";
 
     return null;
@@ -172,7 +205,7 @@ const ShadowNet = ({ onBack }) => {
 
     const speakWithThrottle = (text) => {
         const now = Date.now();
-        if (now - lastSpeakTime.current < 3000) return;
+        if (now - lastSpeakTime.current < 2500) return;
         speak(text);
         setLastSpoken(text);
         lastSpeakTime.current = now;
@@ -225,21 +258,36 @@ const ShadowNet = ({ onBack }) => {
     }, [model, loading]);
 
     return (
-        <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 md:p-8 animate-fade-in">
+        <div className="flex flex-col items-center w-full max-w-6xl mx-auto p-4 md:p-8 animate-fade-in">
             <div className="flex justify-between w-full items-center mb-8">
-                <h2 className="text-3xl font-extrabold text-cyan-400 flex items-center gap-3"><i data-lucide="eye"></i> Shadow Net</h2>
-                <Button onClick={onBack} variant="secondary" iconName="arrow-left">Exit</Button>
+                <div>
+                    <h2 className="text-3xl font-extrabold text-cyan-400 flex items-center gap-3">
+                        <i data-lucide="eye" className="animate-pulse"></i> Shadow Net
+                    </h2>
+                    <p className="text-slate-500 text-sm font-medium mt-1">Real-time object detection & voice guidance.</p>
+                </div>
+                <Button onClick={onBack} variant="secondary" iconName="arrow-left">Exit Scanner</Button>
             </div>
             <div className="grid lg:grid-cols-3 gap-8 w-full">
-                <div className="lg:col-span-2 relative video-container">
-                    {loading && <div className="absolute inset-0 z-20 bg-slate-950/90"><Loader text="Initializing..." /></div>}
+                <div className="lg:col-span-2 relative video-container group">
+                    {loading && <div className="absolute inset-0 z-20 bg-slate-950/90"><Loader text="Initializing neural engine..." /></div>}
                     <div className="scan-line"></div>
                     <video ref={videoRef} autoPlay playsInline muted width="640" height="480" />
-                    <canvas ref={canvasRef} width="640" height="480" />
+                    <canvas ref={canvasRef} width="640" height="480" className="opacity-80" />
                 </div>
-                <div className="glass p-6 rounded-2xl flex flex-col gap-4">
-                    <h3 className="text-cyan-400 font-bold text-xs uppercase tracking-widest">Insights</h3>
-                    <p className="text-xl text-white font-medium">{lastSpoken || "Scanning..."}</p>
+                <div className="glass p-8 rounded-3xl flex flex-col gap-6 shadow-2xl border-cyan-500/20">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></div>
+                        <h3 className="text-cyan-400 font-bold text-xs uppercase tracking-widest">Live Neural Insights</h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <p className="text-3xl text-white font-black leading-tight tracking-tight">
+                            {lastSpoken || "Searching for objects..."}
+                        </p>
+                    </div>
+                    <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl">
+                        <p className="text-xs text-cyan-500/80 font-medium">Using COCO-SSD Model for reliable spatial awareness.</p>
+                    </div>
                 </div>
             </div>
         </div>
