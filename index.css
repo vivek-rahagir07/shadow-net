@@ -42,7 +42,8 @@ video {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform: scaleX(-1); /* Mirror effect for better UX */
+    transform: scaleX(-1);
+    /* Mirror effect for better UX */
 }
 
 .scan-line {
@@ -59,10 +60,23 @@ video {
 }
 
 @keyframes scan {
-    0% { top: 0%; opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { top: 100%; opacity: 0; }
+    0% {
+        top: 0%;
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        top: 100%;
+        opacity: 0;
+    }
 }
 
 .gesture-progress {
@@ -79,32 +93,144 @@ video {
 
 /* Premium Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
 }
 
-.animate-slide-up {
-    animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* ASL Reference Drawer */
+.drawer {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 350px;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 50;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+    padding: 2rem;
+    overflow-y: auto;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
+.drawer.open {
+    right: 0;
 }
 
-::-webkit-scrollbar-track {
-    background: var(--bg-dark);
+.asl-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
 }
 
-::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 10px;
+.asl-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    text-align: center;
+    transition: all 0.2s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+.asl-card:hover {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: #fbbf24;
+}
+
+.asl-card .letter {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fbbf24;
+    display: block;
+}
+
+.asl-card .name {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Learning Overlays */
+.learning-target {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8rem;
+    font-weight: 900;
+    color: rgba(251, 191, 36, 0.4);
+    pointer-events: none;
+    z-index: 5;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.4;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 0.6;
+    }
+}
+
+.success-swipe {
+    position: absolute;
+    inset: 0;
+    background: rgba(34, 197, 94, 0.2);
+    animation: fadeOut 0.5s ease-out forwards;
+    z-index: 6;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* Tutorial Progress */
+.tutorial-stepper {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    width: 100%;
+}
+
+.step-dot {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.step-dot.active {
+    background: #fbbf24;
+    box-shadow: 0 0 10px #fbbf24;
+}
+
+.step-dot.completed {
+    background: #22c55e;
 }
