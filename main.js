@@ -421,7 +421,7 @@ const AslAcademy = ({ onBack }) => {
 
                         {currentGesture && (
                             <div className="absolute top-10 right-10 glass p-10 min-w-[150px] border-amber-400/40 text-center animate-entrance">
-                                <span className="text-8xl font-black text-amber-400 drop-shadow-[0_0_30px_rgba(255,171,64,0.4)]">{currentGesture}</span>
+                             <span className="text-8xl font-black text-amber-400 drop-shadow-[0_0_30px_rgba(255,171,64,0.4)]">{currentGesture}</span>
                                 <div className="mt-8 h-2 w-full bg-white/10 rounded-full overflow-hidden">
                                     <div className="h-full bg-amber-400 transition-all duration-100" style={{ width: `${progress}%` }}></div>
                                 </div>
