@@ -146,7 +146,8 @@ const ShadowNet = ({ onBack }) => {
                     video: { facingMode: "environment", width: 1280, height: 720 }
                 });
                 if (videoRef.current) videoRef.current.srcObject = stream;
-                const loadedModel = await cocoSsd.load();
+                // Load mobilenet_v2 for higher precision
+                const loadedModel = await cocoSsd.load({ base: 'mobilenet_v2' });
                 setModel(loadedModel);
                 setLoading(false);
                 speak("NEURAL ENGINE ONLINE. SCANNING ENVIRONMENT.");
@@ -156,10 +157,11 @@ const ShadowNet = ({ onBack }) => {
         return () => videoRef.current?.srcObject?.getTracks().forEach(t => t.stop());
     }, []);
 
-    const drawARBox = (ctx, x, y, w, h, label, confidence) => {
-        const color = '#06b6d4';
+    const drawARBox = (ctx, x, y, w, h, label, confidence, isLocked) => {
+        const color = isLocked ? '#06b6d4' : 'rgba(255, 255, 255, 0.2)';
         ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
+        ctx.lineWidth = isLocked ? 3 : 1;
+        ctx.setLineDash(isLocked ? [] : [5, 5]);
 
         // Corner brackets
         const len = Math.min(w, h) * 0.15;
@@ -203,27 +205,51 @@ const ShadowNet = ({ onBack }) => {
     useEffect(() => {
         if (!model || loading) return;
         let animationId;
+        const detectionCounts = {}; // Track stability over frames
+
         const detect = async () => {
             if (videoRef.current?.readyState === 4) {
                 const predictions = await model.detect(videoRef.current);
                 const ctx = canvasRef.current.getContext('2d');
                 ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-                const highConfDetections = predictions.filter(p => p.score > 0.5);
+                // Update stability counts
+                predictions.forEach(p => {
+                    if (p.score > 0.4) {
+                        detectionCounts[p.class] = (detectionCounts[p.class] || 0) + 1;
+                    }
+                });
+
+                // Decay logic for missing objects
+                Object.keys(detectionCounts).forEach(cls => {
+                    if (!predictions.find(p => p.class === cls)) {
+                        detectionCounts[cls] = Math.max(0, detectionCounts[cls] - 1);
+                    }
+                    if (detectionCounts[cls] > 15) detectionCounts[cls] = 15; // Cap stability
+                });
+
+                const highConfDetections = predictions.filter(p => {
+                    const stability = detectionCounts[p.class] || 0;
+                    // Hysteresis: Easier to stay confirmed than to become confirmed
+                    const isStable = stability >= 5;
+                    const threshold = isStable ? 0.45 : 0.7;
+                    return p.score > threshold;
+                });
+
                 setDetectedObjects(highConfDetections);
 
                 highConfDetections.forEach(p => {
                     const [x, y, w, h] = p.bbox;
-                    drawARBox(ctx, x, y, w, h, p.class, p.score);
+                    const isLocked = (detectionCounts[p.class] || 0) >= 8;
+                    drawARBox(ctx, x, y, w, h, p.class, p.score, isLocked);
 
-                    // Add to history if unique in last 5 seconds
-                    if (!historyRef.current.find(h => h.class === p.class && Date.now() - h.time < 5000)) {
+                    if (isLocked && !historyRef.current.find(h => h.class === p.class && Date.now() - h.time < 10000)) {
                         const newEntry = { class: p.class, time: Date.now(), id: Math.random() };
                         historyRef.current = [newEntry, ...historyRef.current].slice(0, 5);
                         setHistory([...historyRef.current]);
 
-                        if (Date.now() - lastSpeakTime.current > 3000) {
-                            speak(`Detected ${p.class}`);
+                        if (Date.now() - lastSpeakTime.current > 4000) {
+                            speak(`Confirmed ${p.class}`);
                             lastSpeakTime.current = Date.now();
                         }
                     }
