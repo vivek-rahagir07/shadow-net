@@ -160,40 +160,56 @@ const ShadowNet = ({ onBack }) => {
     }, []);
 
     const drawARBox = (ctx, x, y, w, h, label, confidence, isLocked) => {
-        const color = isLocked ? '#6366f1' : 'rgba(148, 163, 184, 0.3)';
+        // Organic Jitter for realism
+        const jitter = isLocked ? 0 : (Math.random() - 0.5) * 2;
+        const rx = x + jitter;
+        const ry = y + jitter;
+
+        const color = isLocked ? '#6366f1' : 'rgba(148, 163, 184, 0.4)';
         ctx.strokeStyle = color;
         ctx.lineWidth = isLocked ? 2 : 1;
-        ctx.setLineDash(isLocked ? [] : [4, 4]);
+        ctx.setLineDash(isLocked ? [] : [3, 6]);
+
+        // Signal Pulse
+        const pulse = isLocked ? Math.sin(Date.now() / 200) * 0.5 + 0.5 : 1;
+        ctx.globalAlpha = pulse;
 
         // Clean Corner brackets
-        const len = Math.min(w, h) * 0.1;
-        ctx.lineJoin = 'round';
+        const len = Math.min(w, h) * 0.12;
+        ctx.lineJoin = 'miter';
 
-        // Top Left
-        ctx.beginPath(); ctx.moveTo(x, y + len); ctx.lineTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
-        // Top Right
-        ctx.beginPath(); ctx.moveTo(x + w - len, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + len); ctx.stroke();
-        // Bottom Left
-        ctx.beginPath(); ctx.moveTo(x, y + h - len); ctx.lineTo(x, y + h); ctx.lineTo(x + len, y + h); ctx.stroke();
-        // Bottom Right
-        ctx.beginPath(); ctx.moveTo(x + w - len, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - len); ctx.stroke();
+        // Brackets with slight offset for "hardware" feel
+        ctx.beginPath(); ctx.moveTo(rx, ry + len); ctx.lineTo(rx, ry); ctx.lineTo(rx + len, ry); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(rx + w - len, ry); ctx.lineTo(rx + w, ry); ctx.lineTo(rx + w, ry + len); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(rx + w, ry + h - len); ctx.lineTo(rx + w, ry + h); ctx.lineTo(rx + w - len, ry + h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(rx, ry + h - len); ctx.lineTo(rx, ry + h); ctx.lineTo(rx + len, ry + h); ctx.stroke();
 
         if (isLocked) {
-            // Minimal HUD Label
+            // High-Fidelity HUD Label
             ctx.fillStyle = 'rgba(99, 102, 241, 0.9)';
-            const text = `${label.toUpperCase()} ${Math.round(confidence * 100)}%`;
-            ctx.font = 'bold 11px Inter';
-            const padding = 8;
+            const text = `${label.toUpperCase()} // LOCKED`;
+            ctx.font = '900 10px Inter';
+            const padding = 10;
             const textWidth = ctx.measureText(text).width;
 
-            ctx.fillRect(x, y - 22, textWidth + (padding * 2), 22);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(text, x + padding, y - 7);
+            // Decorative line
+            ctx.beginPath(); ctx.moveTo(rx, ry - 5); ctx.lineTo(rx + w, ry - 5); ctx.lineWidth = 1; ctx.stroke();
 
-            // Subtle selection glow
-            ctx.fillStyle = 'rgba(99, 102, 241, 0.03)';
-            ctx.fillRect(x, y, w, h);
+            ctx.fillRect(rx, ry - 25, textWidth + (padding * 2), 20);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, rx + padding, ry - 12);
+
+            // Sub-metrics
+            ctx.font = 'bold 8px Inter';
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fillText(`CONF: ${Math.round(confidence * 100)}%`, rx, ry + h + 15);
+            ctx.fillText(`COORD: ${Math.round(rx)},${Math.round(ry)}`, rx + 60, ry + h + 15);
+
+            // Refractory fill
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.05)';
+            ctx.fillRect(rx, ry, w, h);
         }
+        ctx.globalAlpha = 1.0;
     };
 
     useEffect(() => {
@@ -306,20 +322,36 @@ const ShadowNet = ({ onBack }) => {
 
             <div className="grid lg:grid-cols-12 gap-8 flex-1">
                 <div className="lg:col-span-8 relative">
-                    <div className="video-container glass border-white/5 h-full">
+                    <div className="video-container glass border-white/5 h-full relative overflow-hidden">
                         {loading && <div className="absolute inset-0 z-30 bg-bg-dark/95"><Loader text="Synchronizing Neural Cluster..." /></div>}
+                        <div className="vignette"></div>
+                        <div className="lens-dirt"></div>
                         <div className="scan-line"></div>
-                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-[1.5rem]" />
-                        <canvas ref={canvasRef} width="1280" height="720" className="absolute inset-0 pointer-events-none" />
 
-                        <div className="absolute top-6 left-6 flex flex-col gap-2 pointer-events-none">
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-[1.5rem]" />
+                        <canvas ref={canvasRef} width="1280" height="720" className="absolute inset-0 pointer-events-none z-10" />
+
+                        <div className="absolute top-6 left-6 flex flex-col gap-2 pointer-events-none z-20">
                             <div className="glass px-6 py-3 border-accent-primary/40 bg-accent-primary/10 backdrop-blur-2xl animate-entrance">
                                 <p className="text-[10px] font-black text-accent-primary tracking-[0.4em] mb-2 uppercase">Q-Guide Assistance</p>
-                                <p className="text-xl font-black text-white tracking-tight uppercase">{navInstruction}</p>
+                                <p className="text-xl font-black text-white tracking-tight uppercase chromatic-aberration">{navInstruction}</p>
                             </div>
                         </div>
 
-                        <div className="absolute bottom-6 left-6 flex gap-4 pointer-events-none">
+                        <div className="absolute top-6 right-6 flex flex-col gap-4 pointer-events-none z-20 text-right">
+                            <div className="glass px-4 py-2 border-white/10">
+                                <p className="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1">Environmental Load</p>
+                                <div className="h-1 w-24 bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-accent-warning" style={{ width: `${Math.min(detectedObjects.length * 20, 100)}%` }}></div>
+                                </div>
+                            </div>
+                            <div className="glass px-4 py-2 border-white/10">
+                                <p className="text-[8px] font-black text-text-muted uppercase tracking-widest mb-1">Signal Protocol</p>
+                                <p className="text-[10px] font-black text-accent-success uppercase tracking-widest">Secure // AX-90</p>
+                            </div>
+                        </div>
+
+                        <div className="absolute bottom-6 left-6 flex gap-4 pointer-events-none z-20">
                             <div className="glass px-4 py-2 flex items-center gap-3 border-white/10 backdrop-blur-xl">
                                 <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest">FPS</div>
                                 <div className="text-sm font-black text-accent-success">30.2</div>
@@ -462,14 +494,17 @@ const AslAcademy = ({ onBack }) => {
 
             <div className="grid lg:grid-cols-12 gap-8 flex-1 overflow-hidden">
                 <div className="lg:col-span-8 relative">
-                    <div className="video-container glass border-white/5 h-full">
+                    <div className="video-container glass border-white/5 h-full relative overflow-hidden">
                         {loading && <div className="absolute inset-0 z-30 bg-bg-dark/95"><Loader text="Calibrating Neural Sensors..." /></div>}
+                        <div className="vignette"></div>
+                        <div className="lens-dirt"></div>
+
                         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-[1.5rem]" />
-                        <canvas ref={canvasRef} width="640" height="480" className="absolute inset-0 opacity-40 pointer-events-none" />
+                        <canvas ref={canvasRef} width="640" height="480" className="absolute inset-0 opacity-40 pointer-events-none z-10" />
 
                         {currentGesture && (
-                            <div className="absolute top-8 right-8 glass p-10 min-w-[180px] border-accent-secondary/40 text-center animate-entrance backdrop-blur-3xl bg-accent-secondary/5">
-                                <p className="text-[10px] font-black text-accent-secondary uppercase tracking-[0.3em] mb-6">Interpreted</p>
+                            <div className="absolute top-8 right-8 glass p-10 min-w-[180px] border-accent-secondary/40 text-center animate-entrance backdrop-blur-3xl bg-accent-secondary/5 z-20">
+                                <p className="text-[10px] font-black text-accent-secondary uppercase tracking-[0.3em] mb-6 chromatic-aberration">Interpreted</p>
                                 <span className="text-9xl font-black text-white drop-shadow-[0_0_40px_rgba(14,165,233,0.4)]">{currentGesture}</span>
                                 <div className="mt-10 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-accent-secondary transition-all duration-100" style={{ width: `${progress}%` }}></div>
