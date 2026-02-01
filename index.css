@@ -1,16 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --bg-cosmic: #030014;
+    --bg-cosmic: #02000a;
     --bg-surface: #0a0b1e;
-    --accent-indigo: #5d00ff;
-    --accent-cyan: #00f2ff;
-    --accent-amber: #ffab40;
-    --accent-rose: #ff2d55;
-    --glass-bg: rgba(10, 11, 30, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --neon-blue: 0 0 30px rgba(0, 242, 255, 0.3);
-    --neon-indigo: 0 0 40px rgba(93, 0, 255, 0.4);
+    --accent-indigo: #6366f1;
+    --accent-cyan: #06b6d4;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --accent-emerald: #10b981;
+    --glass-bg: rgba(10, 11, 30, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --neon-blue: 0 0 30px rgba(6, 182, 212, 0.4);
+    --neon-indigo: 0 0 40px rgba(99, 102, 241, 0.4);
 }
 
 * {
@@ -116,12 +117,12 @@ canvas {
         opacity: 0;
     }
 
-    5% {
-        opacity: 1;
+    10% {
+        opacity: 0.8;
     }
 
-    95% {
-        opacity: 1;
+    90% {
+        opacity: 0.8;
     }
 
     100% {
@@ -129,6 +130,66 @@ canvas {
         opacity: 0;
     }
 }
+
+/* --- Detection UI --- */
+.detection-meta {
+    position: absolute;
+    bottom: 2rem;
+    left: 2rem;
+    right: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.detection-tag {
+    padding: 0.5rem 1rem;
+    background: rgba(6, 182, 212, 0.2);
+    border: 1px solid var(--accent-cyan);
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--accent-cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    backdrop-filter: blur(10px);
+}
+
+.object-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 1.25rem;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.object-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--accent-cyan);
+    transform: translateX(5px);
+}
+
+.active-glow {
+    position: relative;
+}
+
+.active-glow::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(45deg, var(--accent-indigo), var(--accent-cyan));
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.active-glow:hover::after {
+    opacity: 0.3;
+}
+
 
 /* --- Interactive Elements --- */
 .btn-premium {
@@ -272,4 +333,17 @@ canvas {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-indigo);
 }

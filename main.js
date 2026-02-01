@@ -134,23 +134,71 @@ const ShadowNet = ({ onBack }) => {
     const canvasRef = useRef(null);
     const [model, setModel] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [lastSpoken, setLastSpoken] = useState("");
+    const [detectedObjects, setDetectedObjects] = useState([]);
+    const [history, setHistory] = useState([]);
     const lastSpeakTime = useRef(0);
+    const historyRef = useRef([]);
 
     useEffect(() => {
         const init = async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment", width: 1280, height: 720 }
+                });
                 if (videoRef.current) videoRef.current.srcObject = stream;
                 const loadedModel = await cocoSsd.load();
                 setModel(loadedModel);
                 setLoading(false);
-                speak("NEURAL ENGINE ONLINE.");
+                speak("NEURAL ENGINE ONLINE. SCANNING ENVIRONMENT.");
             } catch (err) { console.error(err); }
         };
         init();
         return () => videoRef.current?.srcObject?.getTracks().forEach(t => t.stop());
     }, []);
+
+    const drawARBox = (ctx, x, y, w, h, label, confidence) => {
+        const color = '#06b6d4';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+
+        // Corner brackets
+        const len = Math.min(w, h) * 0.15;
+
+        // Top Left
+        ctx.beginPath();
+        ctx.moveTo(x, y + len); ctx.lineTo(x, y); ctx.lineTo(x + len, y);
+        ctx.stroke();
+
+        // Top Right
+        ctx.beginPath();
+        ctx.moveTo(x + w - len, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + len);
+        ctx.stroke();
+
+        // Bottom Left
+        ctx.beginPath();
+        ctx.moveTo(x, y + h - len); ctx.lineTo(x, y + h); ctx.lineTo(x + len, y + h);
+        ctx.stroke();
+
+        // Bottom Right
+        ctx.beginPath();
+        ctx.moveTo(x + w - len, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - len);
+        ctx.stroke();
+
+        // Label Background
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.8)';
+        const text = `${label.toUpperCase()} ${Math.round(confidence * 100)}%`;
+        const textWidth = ctx.measureText(text).width;
+        ctx.fillRect(x, y - 30, textWidth + 20, 30);
+
+        // Label Text
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 14px Outfit';
+        ctx.fillText(text, x + 10, y - 10);
+
+        // Subtle fill
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.05)';
+        ctx.fillRect(x, y, w, h);
+    };
 
     useEffect(() => {
         if (!model || loading) return;
@@ -159,21 +207,27 @@ const ShadowNet = ({ onBack }) => {
             if (videoRef.current?.readyState === 4) {
                 const predictions = await model.detect(videoRef.current);
                 const ctx = canvasRef.current.getContext('2d');
-                ctx.clearRect(0, 0, 640, 480);
+                ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-                let prominent = null;
-                predictions.forEach(p => {
+                const highConfDetections = predictions.filter(p => p.score > 0.5);
+                setDetectedObjects(highConfDetections);
+
+                highConfDetections.forEach(p => {
                     const [x, y, w, h] = p.bbox;
-                    ctx.strokeStyle = '#00f2ff'; ctx.lineWidth = 2;
-                    ctx.setLineDash([15, 10]); ctx.strokeRect(x, y, w, h);
-                    if (!prominent || (w * h > prominent.bbox[2] * prominent.bbox[3])) prominent = p;
-                });
+                    drawARBox(ctx, x, y, w, h, p.class, p.score);
 
-                if (prominent && Date.now() - lastSpeakTime.current > 3000) {
-                    speak(prominent.class);
-                    setLastSpoken(prominent.class);
-                    lastSpeakTime.current = Date.now();
-                }
+                    // Add to history if unique in last 5 seconds
+                    if (!historyRef.current.find(h => h.class === p.class && Date.now() - h.time < 5000)) {
+                        const newEntry = { class: p.class, time: Date.now(), id: Math.random() };
+                        historyRef.current = [newEntry, ...historyRef.current].slice(0, 5);
+                        setHistory([...historyRef.current]);
+
+                        if (Date.now() - lastSpeakTime.current > 3000) {
+                            speak(`Detected ${p.class}`);
+                            lastSpeakTime.current = Date.now();
+                        }
+                    }
+                });
             }
             animationId = requestAnimationFrame(detect);
         };
@@ -182,36 +236,75 @@ const ShadowNet = ({ onBack }) => {
     }, [model, loading]);
 
     return (
-        <div className="min-h-screen p-10 animate-entrance flex flex-col max-w-7xl mx-auto">
-            <header className="flex justify-between items-center mb-16">
+        <div className="min-h-screen p-6 md:p-10 animate-entrance flex flex-col max-w-[1600px] mx-auto">
+            <header className="flex justify-between items-center mb-12">
                 <div>
-                    <h2 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-indigo-600 tracking-tighter uppercase">Shadow Net</h2>
-                    <p className="text-slate-500 font-bold text-xs tracking-[0.3em] mt-2">SITUATIONAL INTELLIGENCE</p>
+                    <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-indigo-600 tracking-tighter uppercase">Shadow Net</h2>
+                    <div className="flex items-center gap-3 mt-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <p className="text-slate-500 font-bold text-[10px] tracking-[0.4em] uppercase">Tactical Neural Interface • v3.0</p>
+                    </div>
                 </div>
-                <Button onClick={onBack} variant="secondary" iconName="arrow-left">Exit Module</Button>
+                <Button onClick={onBack} variant="secondary" iconName="arrow-left" className="px-8">Terminate Session</Button>
             </header>
 
-            <div className="grid lg:grid-cols-12 gap-12 flex-1">
-                <div className="lg:col-span-8">
-                    <div className="video-container">
-                        {loading && <div className="absolute inset-0 z-20 bg-black/90"><Loader text="Initializing Subsystems..." /></div>}
+            <div className="grid lg:grid-cols-12 gap-8 flex-1">
+                <div className="lg:col-span-8 relative">
+                    <div className="video-container group overflow-hidden border-2 border-cyan-500/30">
+                        {loading && <div className="absolute inset-0 z-30 bg-black/90"><Loader text="Synchronizing Neural Pathways..." /></div>}
                         <div className="scan-line"></div>
-                        <video ref={videoRef} autoPlay playsInline muted width="640" height="480" />
-                        <canvas ref={canvasRef} width="640" height="480" />
+                        <video ref={videoRef} autoPlay playsInline muted width="1280" height="720" className="w-full h-full object-cover" />
+                        <canvas ref={canvasRef} width="1280" height="720" className="absolute inset-0 pointer-events-none" />
+
+                        <div className="detection-meta">
+                            <div className="flex gap-2">
+                                <div className="detection-tag bg-cyan-500/20">Active Threads: {detectedObjects.length}</div>
+                                <div className="detection-tag bg-indigo-500/20">Latency: 24ms</div>
+                            </div>
+                            <div className="detection-tag border-emerald-500 text-emerald-500">System Nominal</div>
+                        </div>
                     </div>
                 </div>
-                <div className="lg:col-span-4 flex flex-col gap-8">
-                    <div className="glass p-10 flex-1 flex flex-col justify-end border-indigo-500/20 group hover:border-indigo-500/40 transition-all">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></div>
-                            <h3 className="text-xs font-black text-indigo-400 tracking-[0.4em] uppercase">Intelligence Feed</h3>
+
+                <div className="lg:col-span-4 flex flex-col gap-6">
+                    <div className="glass p-8 flex-1 flex flex-col border-indigo-500/20">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-xs font-black text-indigo-400 tracking-[0.4em] uppercase">Intelligence Stream</h3>
+                            <i data-lucide="activity" className="w-4 h-4 text-indigo-400 animate-pulse"></i>
                         </div>
-                        <p className="text-7xl font-black text-white tracking-tighter uppercase leading-none break-words">
-                            {lastSpoken || "SCANNING..."}
-                        </p>
+
+                        <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+                            {detectedObjects.length > 0 ? (
+                                detectedObjects.map((obj, i) => (
+                                    <div key={i} className="object-card flex items-center justify-between animate-entrance" style={{ animationDelay: `${i * 0.1}s` }}>
+                                        <div>
+                                            <p className="text-white font-black text-xl tracking-tight uppercase">{obj.class}</p>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Classification Confirmed</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-cyan-400 font-black text-lg">{Math.round(obj.score * 100)}%</p>
+                                            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter">Certainty</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-center opacity-30">
+                                    <i data-lucide="scan" className="w-12 h-12 mb-4 animate-pulse"></i>
+                                    <p className="text-sm font-bold tracking-widest uppercase">Awaiting environmental input...</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <div className="glass p-8 border-white/5 opacity-50">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-4 text-center">Engine Core v2.4.9</p>
+
+                    <div className="glass p-6 border-white/5 bg-white/[0.02]">
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mb-4">Detection History</p>
+                        <div className="flex flex-wrap gap-2">
+                            {history.map((h) => (
+                                <span key={h.id} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-slate-400 uppercase tracking-tighter animate-entrance">
+                                    {h.class}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
