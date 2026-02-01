@@ -158,48 +158,40 @@ const ShadowNet = ({ onBack }) => {
     }, []);
 
     const drawARBox = (ctx, x, y, w, h, label, confidence, isLocked) => {
-        const color = isLocked ? '#06b6d4' : 'rgba(255, 255, 255, 0.2)';
+        const color = isLocked ? '#6366f1' : 'rgba(148, 163, 184, 0.3)';
         ctx.strokeStyle = color;
-        ctx.lineWidth = isLocked ? 3 : 1;
-        ctx.setLineDash(isLocked ? [] : [5, 5]);
+        ctx.lineWidth = isLocked ? 2 : 1;
+        ctx.setLineDash(isLocked ? [] : [4, 4]);
 
-        // Corner brackets
-        const len = Math.min(w, h) * 0.15;
+        // Clean Corner brackets
+        const len = Math.min(w, h) * 0.1;
+        ctx.lineJoin = 'round';
 
         // Top Left
-        ctx.beginPath();
-        ctx.moveTo(x, y + len); ctx.lineTo(x, y); ctx.lineTo(x + len, y);
-        ctx.stroke();
-
+        ctx.beginPath(); ctx.moveTo(x, y + len); ctx.lineTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
         // Top Right
-        ctx.beginPath();
-        ctx.moveTo(x + w - len, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + len);
-        ctx.stroke();
-
+        ctx.beginPath(); ctx.moveTo(x + w - len, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + len); ctx.stroke();
         // Bottom Left
-        ctx.beginPath();
-        ctx.moveTo(x, y + h - len); ctx.lineTo(x, y + h); ctx.lineTo(x + len, y + h);
-        ctx.stroke();
-
+        ctx.beginPath(); ctx.moveTo(x, y + h - len); ctx.lineTo(x, y + h); ctx.lineTo(x + len, y + h); ctx.stroke();
         // Bottom Right
-        ctx.beginPath();
-        ctx.moveTo(x + w - len, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - len);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + w - len, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - len); ctx.stroke();
 
-        // Label Background
-        ctx.fillStyle = 'rgba(6, 182, 212, 0.8)';
-        const text = `${label.toUpperCase()} ${Math.round(confidence * 100)}%`;
-        const textWidth = ctx.measureText(text).width;
-        ctx.fillRect(x, y - 30, textWidth + 20, 30);
+        if (isLocked) {
+            // Minimal HUD Label
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.9)';
+            const text = `${label.toUpperCase()} ${Math.round(confidence * 100)}%`;
+            ctx.font = 'bold 11px Inter';
+            const padding = 8;
+            const textWidth = ctx.measureText(text).width;
 
-        // Label Text
-        ctx.fillStyle = '#000';
-        ctx.font = 'bold 14px Outfit';
-        ctx.fillText(text, x + 10, y - 10);
+            ctx.fillRect(x, y - 22, textWidth + (padding * 2), 22);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, x + padding, y - 7);
 
-        // Subtle fill
-        ctx.fillStyle = 'rgba(6, 182, 212, 0.05)';
-        ctx.fillRect(x, y, w, h);
+            // Subtle selection glow
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.03)';
+            ctx.fillRect(x, y, w, h);
+        }
     };
 
     useEffect(() => {
@@ -263,70 +255,78 @@ const ShadowNet = ({ onBack }) => {
 
     return (
         <div className="min-h-screen p-6 md:p-10 animate-entrance flex flex-col max-w-[1600px] mx-auto">
-            <header className="flex justify-between items-center mb-12">
+            <header className="flex justify-between items-center mb-10">
                 <div>
-                    <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-indigo-600 tracking-tighter uppercase">Shadow Net</h2>
-                    <div className="flex items-center gap-3 mt-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <p className="text-slate-500 font-bold text-[10px] tracking-[0.4em] uppercase">Tactical Neural Interface • v3.0</p>
+                    <h2 className="text-4xl md:text-5xl font-black text-white font-heading tracking-tighter uppercase leading-none">
+                        SHADOW<span className="text-accent-primary">NET</span>
+                    </h2>
+                    <div className="flex items-center gap-2 mt-3 text-text-muted font-bold text-[9px] uppercase tracking-[0.4em]">
+                        <span className="w-2 h-2 rounded-full bg-accent-success animate-pulse"></span>
+                        Neural Interface Active • Cluster: AX-90
                     </div>
                 </div>
-                <Button onClick={onBack} variant="secondary" iconName="arrow-left" className="px-8">Terminate Session</Button>
+                <Button onClick={onBack} variant="secondary" iconName="power" className="px-8 bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500 hover:text-white">Terminate</Button>
             </header>
 
             <div className="grid lg:grid-cols-12 gap-8 flex-1">
                 <div className="lg:col-span-8 relative">
-                    <div className="video-container group overflow-hidden border-2 border-cyan-500/30">
-                        {loading && <div className="absolute inset-0 z-30 bg-black/90"><Loader text="Synchronizing Neural Pathways..." /></div>}
+                    <div className="video-container glass border-white/5 h-full">
+                        {loading && <div className="absolute inset-0 z-30 bg-bg-dark/95"><Loader text="Synchronizing Neural Cluster..." /></div>}
                         <div className="scan-line"></div>
-                        <video ref={videoRef} autoPlay playsInline muted width="1280" height="720" className="w-full h-full object-cover" />
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-[1.5rem]" />
                         <canvas ref={canvasRef} width="1280" height="720" className="absolute inset-0 pointer-events-none" />
 
-                        <div className="detection-meta">
-                            <div className="flex gap-2">
-                                <div className="detection-tag bg-cyan-500/20">Active Threads: {detectedObjects.length}</div>
-                                <div className="detection-tag bg-indigo-500/20">Latency: 24ms</div>
+                        <div className="absolute bottom-6 left-6 flex gap-4 pointer-events-none">
+                            <div className="glass px-4 py-2 flex items-center gap-3 border-white/10 backdrop-blur-xl">
+                                <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest">FPS</div>
+                                <div className="text-sm font-black text-accent-success">30.2</div>
                             </div>
-                            <div className="detection-tag border-emerald-500 text-emerald-500">System Nominal</div>
+                            <div className="glass px-4 py-2 flex items-center gap-3 border-white/10 backdrop-blur-xl">
+                                <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Threads</div>
+                                <div className="text-sm font-black text-white">{detectedObjects.length}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="lg:col-span-4 flex flex-col gap-6">
-                    <div className="glass p-8 flex-1 flex flex-col border-indigo-500/20">
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-xs font-black text-indigo-400 tracking-[0.4em] uppercase">Intelligence Stream</h3>
-                            <i data-lucide="activity" className="w-4 h-4 text-indigo-400 animate-pulse"></i>
+                <div className="lg:col-span-4 flex flex-col gap-6 h-full overflow-hidden">
+                    <div className="glass p-8 flex-1 flex flex-col border-white/5 overflow-hidden">
+                        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
+                            <h3 className="text-[10px] font-black text-text-muted tracking-[0.4em] uppercase">Intelligence Stream</h3>
+                            <div className="flex items-center gap-1.5 text-accent-primary">
+                                <div className="w-1.5 h-1.5 rounded-full bg-accent-primary"></div>
+                                <span className="text-[9px] font-bold uppercase tracking-widest">Live</span>
+                            </div>
                         </div>
 
-                        <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
                             {detectedObjects.length > 0 ? (
                                 detectedObjects.map((obj, i) => (
-                                    <div key={i} className="object-card flex items-center justify-between animate-entrance" style={{ animationDelay: `${i * 0.1}s` }}>
+                                    <div key={i} className="group p-5 bg-white/[0.02] border border-white/5 rounded-xl flex items-center justify-between animate-entrance hover:bg-white/[0.04] hover:border-accent-primary/20 transition-all">
                                         <div>
-                                            <p className="text-white font-black text-xl tracking-tight uppercase">{obj.class}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Classification Confirmed</p>
+                                            <p className="text-white font-black text-lg tracking-tight uppercase leading-none">{obj.class}</p>
+                                            <p className="text-[9px] text-text-muted font-bold uppercase tracking-widest mt-2 px-2 py-0.5 bg-accent-primary/10 rounded inline-block">Active Lock</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-cyan-400 font-black text-lg">{Math.round(obj.score * 100)}%</p>
-                                            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter">Certainty</p>
+                                            <p className="text-accent-primary font-black text-xl">{Math.round(obj.score * 100)}%</p>
+                                            <p className="text-[8px] text-text-muted font-bold uppercase tracking-tighter mt-1 opacity-50">Precision</p>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-center opacity-30">
-                                    <i data-lucide="scan" className="w-12 h-12 mb-4 animate-pulse"></i>
-                                    <p className="text-sm font-bold tracking-widest uppercase">Awaiting environmental input...</p>
+                                <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
+                                    <i data-lucide="radar" className="w-12 h-12 mb-4 animate-pulse"></i>
+                                    <p className="text-[10px] font-bold tracking-[0.3em] uppercase">Scanning Environment...</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <div className="glass p-6 border-white/5 bg-white/[0.02]">
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em] mb-4">Detection History</p>
+                    <div className="glass p-6 border-white/5 bg-white/[0.01]">
+                        <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.4em] mb-4">Registry Log</h4>
                         <div className="flex flex-wrap gap-2">
                             {history.map((h) => (
-                                <span key={h.id} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-slate-400 uppercase tracking-tighter animate-entrance">
+                                <span key={h.id} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[9px] font-bold text-text-muted uppercase tracking-tighter animate-entrance hover:bg-white/10 transition-colors">
                                     {h.class}
                                 </span>
                             ))}
@@ -399,42 +399,51 @@ const AslAcademy = ({ onBack }) => {
     }, [model, loading]);
 
     return (
-        <div className="min-h-screen p-10 animate-entrance flex flex-col max-w-7xl mx-auto">
+        <div className="min-h-screen p-6 md:p-10 animate-entrance flex flex-col max-w-[1600px] mx-auto">
             <AslReferenceDrawer isOpen={isGuideOpen} onClose={() => setGuideOpen(false)} />
-            <header className="flex justify-between items-center mb-16 relative z-10">
+            <header className="flex justify-between items-center mb-12">
                 <div>
-                    <h2 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-500 tracking-tighter uppercase">ASL Bridge</h2>
-                    <p className="text-slate-500 font-bold text-xs tracking-[0.3em] mt-2">GESTURE NEURAL LINK</p>
+                    <h2 className="text-4xl md:text-5xl font-black text-white font-heading tracking-tighter uppercase leading-none">
+                        ASL<span className="text-accent-secondary">BRIDGE</span>
+                    </h2>
+                    <div className="flex items-center gap-2 mt-3 text-text-muted font-bold text-[9px] uppercase tracking-[0.4em]">
+                        <span className="w-2 h-2 rounded-full bg-accent-secondary animate-pulse"></span>
+                        Symmetric Gesture Synthesis Active
+                    </div>
                 </div>
-                <div className="flex gap-6">
-                    <Button onClick={() => setGuideOpen(true)} variant="secondary" iconName="book-open">Lexicon</Button>
-                    <Button onClick={onBack} variant="secondary" iconName="arrow-left">Exit Lab</Button>
+                <div className="flex gap-4">
+                    <Button onClick={() => setGuideOpen(true)} variant="secondary" iconName="book-open" className="px-6">Lexicon</Button>
+                    <Button onClick={onBack} variant="secondary" iconName="power" className="px-6 bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500 hover:text-white">Exit Lab</Button>
                 </div>
             </header>
 
-            <div className="grid lg:grid-cols-12 gap-12 flex-1 relative z-10">
-                <div className="lg:col-span-8">
-                    <div className="video-container border-amber-500/40">
-                        {loading && <div className="absolute inset-0 z-20 bg-black/90"><Loader text="Calibrating Sensors..." /></div>}
-                        <video ref={videoRef} autoPlay playsInline muted />
-                        <canvas ref={canvasRef} width="640" height="480" className="opacity-60" />
+            <div className="grid lg:grid-cols-12 gap-8 flex-1 overflow-hidden">
+                <div className="lg:col-span-8 relative">
+                    <div className="video-container glass border-white/5 h-full">
+                        {loading && <div className="absolute inset-0 z-30 bg-bg-dark/95"><Loader text="Calibrating Neural Sensors..." /></div>}
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-[1.5rem]" />
+                        <canvas ref={canvasRef} width="640" height="480" className="absolute inset-0 opacity-40 pointer-events-none" />
 
                         {currentGesture && (
-                            <div className="absolute top-10 right-10 glass p-10 min-w-[150px] border-amber-400/40 text-center animate-entrance">
-                             <span className="text-8xl font-black text-amber-400 drop-shadow-[0_0_30px_rgba(255,171,64,0.4)]">{currentGesture}</span>
-                                <div className="mt-8 h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full bg-amber-400 transition-all duration-100" style={{ width: `${progress}%` }}></div>
+                            <div className="absolute top-8 right-8 glass p-10 min-w-[180px] border-accent-secondary/40 text-center animate-entrance backdrop-blur-3xl bg-accent-secondary/5">
+                                <p className="text-[10px] font-black text-accent-secondary uppercase tracking-[0.3em] mb-6">Interpreted</p>
+                                <span className="text-9xl font-black text-white drop-shadow-[0_0_40px_rgba(14,165,233,0.4)]">{currentGesture}</span>
+                                <div className="mt-10 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-accent-secondary transition-all duration-100" style={{ width: `${progress}%` }}></div>
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="lg:col-span-4 flex flex-col gap-8 justify-end">
-                    <div className="glass p-12 border-white/5">
-                        <h4 className="text-xs font-black text-slate-500 tracking-[0.4em] mb-10 text-center uppercase">Learning Progress</h4>
-                        <div className="flex gap-3 justify-center">
-                            {[1, 2, 3, 4, 5].map(i => <div key={i} className={`w-3 h-3 rounded-full ${i === 1 ? 'bg-amber-400' : 'bg-white/10'}`}></div>)}
+                <div className="lg:col-span-4 flex flex-col gap-6 h-full justify-end">
+                    <div className="glass p-10 border-white/5 bg-white/[0.01]">
+                        <h4 className="text-[10px] font-black text-text-muted tracking-[0.4em] mb-10 text-center uppercase">Neural Calibration</h4>
+                        <div className="flex gap-4 justify-center">
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className={`w-2.5 h-2.5 rounded-full ${i === 1 ? 'bg-accent-secondary animate-pulse' : 'bg-white/5'}`}></div>
+                            ))}
                         </div>
+                        <p className="text-[9px] text-text-muted font-bold text-center mt-8 uppercase tracking-widest opacity-40 italic">Waiting for specific geometry...</p>
                     </div>
                 </div>
             </div>
@@ -451,25 +460,42 @@ const App = () => {
             <div className="super-aura"></div>
 
             {mode === 'home' && (
-                <div className="min-h-screen flex flex-col items-center justify-center p-10 animate-entrance">
-                    <header className="text-center mb-24 max-w-3xl">
-                        <div className="inline-block px-6 py-2 glass border-indigo-500/40 rounded-full text-indigo-400 text-[10px] font-black uppercase tracking-[0.5em] mb-12 shadow-2xl">Hyper-Accessibility v2.5</div>
-                        <h1 className="text-9xl md:text-[11.5rem] font-black text-white tracking-tighter mb-10 leading-[0.8] text-center drop-shadow-2xl">VISION<br /><span className="text-transparent bg-clip-text bg-gradient-to-tr from-indigo-600 via-indigo-400 to-cyan-400">ASSIST</span></h1>
-                        <p className="text-slate-400 text-2xl font-medium leading-relaxed opacity-70 max-w-xl mx-auto">Bridging the gap through high-fidelity neural interpretation.</p>
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 md:p-12 animate-entrance max-w-7xl mx-auto">
+                    <header className="text-center mb-24 relative">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 glass border-accent-primary/20 rounded-full mb-8">
+                            <div className="w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse"></div>
+                            <span className="text-[10px] font-bold text-accent-primary uppercase tracking-[0.3em]">System v3.5 Stable</span>
+                        </div>
+                        <h1 className="text-7xl md:text-9xl font-black text-white tracking-tighter mb-6 leading-none">
+                            AURORA<span className="text-accent-primary">.</span>OS
+                        </h1>
+                        <p className="text-text-muted text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
+                            Next-generation neural orchestration for situational intelligence and spatial interpretation.
+                        </p>
                     </header>
 
-                    <div className="grid md:grid-cols-2 gap-12 w-full max-w-6xl">
+                    <div className="grid md:grid-cols-2 gap-8 w-full">
                         {[
-                            { id: 'shadow', title: 'SHADOW NET', desc: 'Situational Awareness Engine.', variant: 'accent', icon: 'eye' },
-                            { id: 'asl', title: 'ASL BRIDGE', desc: 'Gesture Synthesis Laboratory.', variant: 'primary', icon: 'zap' }
+                            { id: 'shadow', title: 'Shadow Net', desc: 'Secure Environmental Analysis', icon: 'eye', status: 'Optimal', meta: 'Neural v2.5' },
+                            { id: 'asl', title: 'ASL Bridge', desc: 'Symmetric Gesture Synthesis', icon: 'zap', status: 'Ready', meta: 'Handpose 4.0' }
                         ].map(module => (
-                            <div key={module.id} className="group glass p-14 hover:scale-[1.03] hover:bg-white/[0.04] border-white/5 hover:border-white/10 transition-all duration-700">
-                                <div className="w-20 h-20 rounded-[2.5rem] bg-indigo-500/10 flex items-center justify-center mb-12 text-white group-hover:bg-indigo-500/20 group-hover:scale-110 transition-all">
-                                    <i data-lucide={module.icon} className="w-10 h-10"></i>
+                            <div key={module.id}
+                                onClick={() => setMode(module.id)}
+                                className="group glass p-10 cursor-pointer hover:border-accent-primary/40 hover:translate-y-[-4px] active:scale-95">
+                                <div className="flex justify-between items-start mb-10">
+                                    <div className="p-4 rounded-xl bg-accent-primary/10 text-accent-primary group-hover:bg-accent-primary group-hover:text-white transition-all">
+                                        <i data-lucide={module.icon} className="w-8 h-8"></i>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-black text-accent-success uppercase tracking-widest">{module.status}</span>
+                                        <p className="text-[9px] text-text-muted font-bold uppercase mt-1 opacity-50">{module.meta}</p>
+                                    </div>
                                 </div>
-                                <h2 className="text-5xl font-black text-white mb-4 tracking-tighter uppercase">{module.title}</h2>
-                                <p className="text-slate-500 text-xl font-medium mb-12">{module.desc}</p>
-                                <Button onClick={() => setMode(module.id)} variant={module.variant} className="w-full py-6 text-xl rounded-2xl">Initialize Link</Button>
+                                <h2 className="text-3xl font-black text-white mb-2 tracking-tight uppercase">{module.title}</h2>
+                                <p className="text-text-muted text-sm font-medium mb-8 leading-relaxed">{module.desc}</p>
+                                <div className="flex items-center text-accent-primary text-xs font-bold uppercase tracking-widest gap-2">
+                                    Initialize Interface <i data-lucide="chevron-right" className="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                                </div>
                             </div>
                         ))}
                     </div>
