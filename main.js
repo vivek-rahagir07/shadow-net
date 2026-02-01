@@ -136,7 +136,9 @@ const ShadowNet = ({ onBack }) => {
     const [loading, setLoading] = useState(true);
     const [detectedObjects, setDetectedObjects] = useState([]);
     const [history, setHistory] = useState([]);
+    const [navInstruction, setNavInstruction] = useState('PATH CLEAR');
     const lastSpeakTime = useRef(0);
+    const lastNavSpeakTime = useRef(0);
     const historyRef = useRef([]);
 
     useEffect(() => {
@@ -230,6 +232,40 @@ const ShadowNet = ({ onBack }) => {
 
                 setDetectedObjects(highConfDetections);
 
+                // --- QGuide: Spatial Navigation Logic ---
+                let primaryObstacle = null;
+                highConfDetections.forEach(p => {
+                    const [x, y, w, h] = p.bbox;
+                    // Prioritize people or large objects as obstacles
+                    if (p.class === 'person' || p.class === 'chair' || p.class === 'couch') {
+                        if (!primaryObstacle || p.score > primaryObstacle.score) primaryObstacle = p;
+                    }
+                });
+
+                let newNav = 'PATH CLEAR';
+                if (primaryObstacle) {
+                    const [x, y, w, h] = primaryObstacle.bbox;
+                    const centerX = x + w / 2;
+                    const vWidth = 1280; // Coordinate space of MobileNet V2 output
+
+                    if (centerX > 480 && centerX < 800) {
+                        newNav = `${primaryObstacle.class.toUpperCase()} AHEAD. STEER RIGHT.`;
+                    } else if (centerX <= 480) {
+                        newNav = `${primaryObstacle.class.toUpperCase()} ON LEFT. PATH CLEAR ON RIGHT.`;
+                    } else {
+                        newNav = `${primaryObstacle.class.toUpperCase()} ON RIGHT. PATH CLEAR ON LEFT.`;
+                    }
+                }
+
+                if (newNav !== navInstruction) {
+                    setNavInstruction(newNav);
+                    // Critical navigation instructions have higher priority but longer cooldown
+                    if (Date.now() - lastNavSpeakTime.current > 5000) {
+                        speak(newNav);
+                        lastNavSpeakTime.current = Date.now();
+                    }
+                }
+
                 highConfDetections.forEach(p => {
                     const [x, y, w, h] = p.bbox;
                     const isLocked = (detectionCounts[p.class] || 0) >= 8;
@@ -275,6 +311,13 @@ const ShadowNet = ({ onBack }) => {
                         <div className="scan-line"></div>
                         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-[1.5rem]" />
                         <canvas ref={canvasRef} width="1280" height="720" className="absolute inset-0 pointer-events-none" />
+
+                        <div className="absolute top-6 left-6 flex flex-col gap-2 pointer-events-none">
+                            <div className="glass px-6 py-3 border-accent-primary/40 bg-accent-primary/10 backdrop-blur-2xl animate-entrance">
+                                <p className="text-[10px] font-black text-accent-primary tracking-[0.4em] mb-2 uppercase">Q-Guide Assistance</p>
+                                <p className="text-xl font-black text-white tracking-tight uppercase">{navInstruction}</p>
+                            </div>
+                        </div>
 
                         <div className="absolute bottom-6 left-6 flex gap-4 pointer-events-none">
                             <div className="glass px-4 py-2 flex items-center gap-3 border-white/10 backdrop-blur-xl">
